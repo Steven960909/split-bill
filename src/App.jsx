@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Trash2, Copy, Check, Utensils, Receipt, Sparkles, User, RefreshCcw } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, Utensils, Receipt, Sparkles, User, RefreshCcw, ArrowRight } from 'lucide-react';
 
 export default function App() {
   // --- 狀態管理 ---
@@ -48,7 +48,7 @@ export default function App() {
     }
   };
 
-  // --- 核心計算邏輯 (保持不變) ---
+  // --- 核心計算邏輯 ---
   const { subtotal, finalTotal, calculations } = useMemo(() => {
     const sub = items.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
     const extra = parseFloat(extraFee) || 0;
@@ -120,7 +120,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-32">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-36">
       
       {/* 頂部導航列 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex justify-between items-center">
@@ -180,47 +180,63 @@ export default function App() {
             </h2>
           </div>
 
-          {items.map((item, index) => (
-            <div key={item.id} className="group bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 animate-slideIn">
-              
-              {/* 名字輸入 */}
-              <div className="flex-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
-                  <User size={16} />
+          {items.map((item, index) => {
+             // 取得該項目的計算結果
+             const result = calculations[index] || { finalPay: 0 };
+             
+             return (
+              <div key={item.id} className="group bg-white p-3 rounded-2xl shadow-sm border border-slate-100 animate-slideIn">
+                
+                <div className="flex items-center gap-3">
+                  {/* 名字輸入 */}
+                  <div className="flex-1 relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
+                      <User size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                      placeholder={`朋友 ${index + 1}`}
+                      className="w-full pl-9 pr-2 py-2 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-700 text-sm transition-all"
+                    />
+                  </div>
+
+                  {/* 金額輸入 */}
+                  <div className="w-28 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
+                    <input
+                      type="number"
+                      value={item.price}
+                      onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                      placeholder="0"
+                      className="w-full pl-6 pr-3 py-2 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 font-semibold text-right transition-all"
+                    />
+                  </div>
+
+                  {/* 刪除按鈕 */}
+                  <button
+                    onClick={() => deleteItem(item.id)}
+                    className={`p-2 rounded-xl transition-colors ${items.length === 1 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-500'}`}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                  placeholder={`朋友 ${index + 1}`}
-                  className="w-full pl-9 pr-2 py-2 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-700 text-sm transition-all"
-                />
-              </div>
 
-              {/* 金額輸入 */}
-              <div className="w-28 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
-                <input
-                  type="number"
-                  value={item.price}
-                  onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                  placeholder="0"
-                  className="w-full pl-6 pr-3 py-2 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 font-semibold text-right transition-all"
-                />
-              </div>
+                {/* 新增：顯示計算結果的區域 */}
+                <div className="mt-2 pt-2 border-t border-dashed border-slate-100 flex justify-end items-center gap-2">
+                   <span className="text-xs text-slate-400">應付 (含運/折):</span>
+                   <span className="text-lg font-bold text-emerald-600 flex items-center gap-0.5">
+                      <span className="text-sm font-normal opacity-70">$</span>
+                      {result.finalPay}
+                   </span>
+                </div>
 
-              {/* 刪除按鈕 */}
-              <button
-                onClick={() => deleteItem(item.id)}
-                className={`p-2 rounded-xl transition-colors ${items.length === 1 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-500'}`}
-                disabled={items.length === 1}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          ))}
+              </div>
+            );
+          })}
           
-          {/* 隱藏錨點，用於自動捲動 */}
           <div ref={listEndRef} />
 
           <button
@@ -236,7 +252,6 @@ export default function App() {
       {/* 底部懸浮結帳列 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] p-4 pb-6 md:pb-4 safe-area-bottom z-20">
         <div className="max-w-md mx-auto">
-          {/* 總覽資訊 */}
           <div className="flex justify-between items-end mb-4">
             <div>
               <p className="text-xs text-slate-400 mb-0.5">總金額 (Total)</p>
@@ -246,14 +261,12 @@ export default function App() {
               </div>
             </div>
             
-            {/* 顯示當前計算狀態的提示 */}
             <div className="text-right">
                <p className="text-xs text-slate-400 mb-0.5">原價小計</p>
                <p className="text-slate-600 font-medium">${Math.round(subtotal)}</p>
             </div>
           </div>
 
-          {/* 操作按鈕 */}
           <button
             onClick={handleCopy}
             className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
@@ -273,15 +286,12 @@ export default function App() {
         </div>
       </div>
 
-      {/* 全局樣式 */}
       <style>{`
-        /* 隱藏數字輸入框的上下箭頭 */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
           -webkit-appearance: none; 
           margin: 0; 
         }
-        /* 動畫效果 */
         @keyframes slideIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
@@ -289,7 +299,6 @@ export default function App() {
         .animate-slideIn {
           animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        /* iOS 底部安全區域 */
         .safe-area-bottom {
           padding-bottom: env(safe-area-inset-bottom, 20px);
         }
